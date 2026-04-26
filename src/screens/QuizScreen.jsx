@@ -5,6 +5,7 @@ import ProgressBar from '../components/ProgressBar.jsx'
 import PillGroup from '../components/PillGroup.jsx'
 import SliderStep from '../components/SliderStep.jsx'
 import WineSearchStep from '../components/WineSearchStep.jsx'
+import TopBar from '../components/TopBar.jsx'
 
 function isStepComplete(step, answers) {
   if (!step.required) return true
@@ -14,7 +15,7 @@ function isStepComplete(step, answers) {
   return true
 }
 
-export default function QuizScreen({ navigate, quizAnswers, onAnswerChange, onComplete }) {
+export default function QuizScreen({ navigate, goBack, quizAnswers, onAnswerChange, onComplete }) {
   const [currentStep, setCurrentStep] = useState(0)
 
   const step = quizSteps[currentStep]
@@ -43,8 +44,9 @@ export default function QuizScreen({ navigate, quizAnswers, onAnswerChange, onCo
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: theme.colors.surface }}>
+      <TopBar onBack={goBack} onHome={() => navigate('home')} />
       {/* Progress */}
-      <div style={{ flexShrink: 0, paddingTop: theme.spacing.lg }}>
+      <div style={{ flexShrink: 0 }}>
         <ProgressBar
           current={currentStep}
           total={quizSteps.length}

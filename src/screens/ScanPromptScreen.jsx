@@ -1,5 +1,6 @@
 import { theme } from '../theme/theme.js'
 import ScanModeCard from '../components/ScanModeCard.jsx'
+import TopBar from '../components/TopBar.jsx'
 
 const SCAN_MODES = [
   { icon: '📋', title: 'Restaurant wine list', description: 'Scan a printed or digital menu' },
@@ -13,17 +14,20 @@ const BUYING_FOR = [
   { id: 'gift',  label: 'A gift' },
 ]
 
-export default function ScanPromptScreen({ navigate, buyingFor, onBuyingForChange }) {
+export default function ScanPromptScreen({ navigate, goBack, buyingFor, onBuyingForChange }) {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: theme.colors.surface }}>
       {/* Header */}
-      <div style={{ backgroundColor: theme.colors.brandDark, padding: `${theme.spacing.xl} ${theme.spacing.lg} ${theme.spacing.lg}` }}>
-        <h1 style={{ fontFamily: theme.typography.fontSerif, fontSize: theme.typography.sizes.xxl, color: theme.colors.cream, fontWeight: theme.typography.weights.normal }}>
-          What are you scanning?
-        </h1>
-        <p style={{ fontSize: theme.typography.sizes.sm, color: `${theme.colors.cream}80`, fontFamily: theme.typography.fontSans, marginTop: theme.spacing.xs }}>
-          Choose a scan mode to get started
-        </p>
+      <div style={{ backgroundColor: theme.colors.brandDark, flexShrink: 0 }}>
+        <TopBar onBack={goBack} onHome={() => navigate('home')} light />
+        <div style={{ padding: `${theme.spacing.sm} ${theme.spacing.lg} ${theme.spacing.lg}` }}>
+          <h1 style={{ fontFamily: theme.typography.fontSerif, fontSize: theme.typography.sizes.xxl, color: theme.colors.cream, fontWeight: theme.typography.weights.normal }}>
+            What are you scanning?
+          </h1>
+          <p style={{ fontSize: theme.typography.sizes.sm, color: `${theme.colors.cream}80`, fontFamily: theme.typography.fontSans, marginTop: theme.spacing.xs }}>
+            Choose a scan mode to get started
+          </p>
+        </div>
       </div>
 
       {/* Scrollable body */}

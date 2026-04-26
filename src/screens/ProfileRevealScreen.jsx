@@ -1,5 +1,6 @@
 import { theme } from '../theme/theme.js'
 import ScoreBar from '../components/ScoreBar.jsx'
+import TopBar from '../components/TopBar.jsx'
 
 function palateDescriptor(axis, value) {
   if (axis === 'body') {
@@ -26,7 +27,7 @@ function palateDescriptor(axis, value) {
   return ''
 }
 
-export default function ProfileRevealScreen({ navigate, tasteProfile }) {
+export default function ProfileRevealScreen({ navigate, goBack, tasteProfile }) {
   if (!tasteProfile) return null
 
   const { palate } = tasteProfile
@@ -37,10 +38,11 @@ export default function ProfileRevealScreen({ navigate, tasteProfile }) {
       <div
         style={{
           backgroundColor: theme.colors.brandDark,
-          padding: `${theme.spacing.xl} ${theme.spacing.xl} ${theme.spacing.xxl}`,
           textAlign: 'center',
         }}
       >
+        <TopBar onBack={goBack} onHome={() => navigate('home')} light />
+        <div style={{ padding: `${theme.spacing.sm} ${theme.spacing.xl} ${theme.spacing.xxl}` }}>
         <div
           style={{
             fontSize: theme.typography.sizes.xs,
@@ -78,6 +80,7 @@ export default function ProfileRevealScreen({ navigate, tasteProfile }) {
         >
           {tasteProfile.description}
         </p>
+        </div>
       </div>
 
       {/* Bottom zone — scrollable */}

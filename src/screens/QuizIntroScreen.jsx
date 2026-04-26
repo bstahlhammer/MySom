@@ -1,4 +1,5 @@
 import { theme } from '../theme/theme.js'
+import TopBar from '../components/TopBar.jsx'
 
 function GlassIllustration() {
   return (
@@ -11,7 +12,7 @@ function GlassIllustration() {
   )
 }
 
-export default function QuizIntroScreen({ navigate }) {
+export default function QuizIntroScreen({ navigate, goBack }) {
   const bullets = [
     { icon: '⏱', text: '90 seconds — seriously, that\'s it' },
     { icon: '🚫', text: 'No wine jargon. Plain English only' },
@@ -19,18 +20,19 @@ export default function QuizIntroScreen({ navigate }) {
   ]
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: theme.colors.surface,
-        padding: `${theme.spacing.xxl} ${theme.spacing.xl}`,
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: theme.spacing.xl,
-      }}
-    >
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: theme.colors.surface }}>
+      <TopBar onBack={goBack} onHome={() => navigate('home')} />
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: `${theme.spacing.xl} ${theme.spacing.xl}`,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: theme.spacing.xl,
+        }}
+      >
       <GlassIllustration />
 
       <div style={{ textAlign: 'center' }}>
@@ -98,6 +100,7 @@ export default function QuizIntroScreen({ navigate }) {
         >
           Skip for now
         </button>
+      </div>
       </div>
     </div>
   )

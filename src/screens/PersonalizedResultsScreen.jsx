@@ -5,6 +5,7 @@ import { sortWines } from '../engine/sortEngine.js'
 import WineCard from '../components/WineCard.jsx'
 import SortToggle from '../components/SortToggle.jsx'
 import BottomNav from '../components/BottomNav.jsx'
+import TopBar from '../components/TopBar.jsx'
 
 const SORT_OPTIONS = [
   { value: 'match',          label: 'My Match' },
@@ -13,7 +14,7 @@ const SORT_OPTIONS = [
   { value: 'approachability', label: 'For group' },
 ]
 
-export default function PersonalizedResultsScreen({ navigate, tasteProfile, buyingFor, onWineSelect }) {
+export default function PersonalizedResultsScreen({ navigate, goBack, tasteProfile, buyingFor, onWineSelect }) {
   const defaultSort = buyingFor === 'group' ? 'approachability' : 'match'
   const [sortKey, setSortKey] = useState(defaultSort)
 
@@ -28,14 +29,16 @@ export default function PersonalizedResultsScreen({ navigate, tasteProfile, buyi
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: theme.colors.surface }}>
       {/* Header */}
-      <div style={{ backgroundColor: theme.colors.brandDark, padding: `${theme.spacing.xl} ${theme.spacing.lg} ${theme.spacing.md}` }}>
+      <div style={{ backgroundColor: theme.colors.brandDark, flexShrink: 0 }}>
+        <TopBar onBack={goBack} onHome={() => navigate('home')} light />
+        <div style={{ padding: `0 ${theme.spacing.lg} ${theme.spacing.md}` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1 style={{ fontFamily: theme.typography.fontSerif, fontSize: theme.typography.sizes.xxl, color: theme.colors.cream, fontWeight: theme.typography.weights.normal }}>
               Your matches
             </h1>
             <p style={{ fontSize: theme.typography.sizes.sm, color: `${theme.colors.cream}80`, fontFamily: theme.typography.fontSans, marginTop: 4 }}>
-              8 wines · Osteria Marco
+              {wines.length} wines · Tap any to explore
             </p>
           </div>
           {/* Identity chip */}
@@ -61,6 +64,7 @@ export default function PersonalizedResultsScreen({ navigate, tasteProfile, buyi
         </div>
         <div style={{ marginTop: theme.spacing.md }}>
           <SortToggle options={SORT_OPTIONS} value={sortKey} onChange={setSortKey} />
+        </div>
         </div>
       </div>
 
