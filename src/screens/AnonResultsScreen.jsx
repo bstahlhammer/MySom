@@ -42,7 +42,7 @@ export default function AnonResultsScreen({ navigate, goBack, onWineSelect, tast
       </div>
 
       {/* Scrollable content */}
-      <div className="hide-scrollbar" style={{ flex: 1, overflowY: 'scroll', WebkitOverflowScrolling: 'touch' }}>
+      <div className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto' }}>
         {/* Upsell banner */}
         <UpsellBanner onCta={() => navigate('quizIntro')} />
 
