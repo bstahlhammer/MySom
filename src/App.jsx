@@ -73,6 +73,8 @@ export default function App() {
   const [quizAnswers,  setQuizAnswers]  = useState(INITIAL_QUIZ_ANSWERS)
   const [tasteProfile, setTasteProfile] = useState(null)
   const [toast,        setToast]        = useState(null)
+  const [scanFile,     setScanFile]     = useState(null)
+  const [scannedWines, setScannedWines] = useState(null)
 
   const navigate = useCallback((to) => {
     setDirection('forward')
@@ -116,6 +118,16 @@ export default function App() {
     setScreen('wineDetail')
   }, [screen])
 
+  const handleScan = useCallback((file) => {
+    setScanFile(file)
+    navigate('scanning')
+  }, [navigate])
+
+  const handleScanComplete = useCallback((wines) => {
+    setScannedWines(wines)
+    navigate('anonResults')
+  }, [navigate])
+
   const handleRate = useCallback((label) => {
     showToast(`${label === 'Love it' ? '❤️' : label === 'Pretty good' ? '👍' : label === 'Not sure' ? '🤷' : '👎'} Saved: ${label}`)
     setTimeout(() => {
@@ -136,15 +148,23 @@ export default function App() {
             {...nav}
             buyingFor={buyingFor}
             onBuyingForChange={setBuyingFor}
+            onScan={handleScan}
           />
         )
       case 'scanning':
-        return <ScanningScreen {...nav} />
+        return (
+          <ScanningScreen
+            {...nav}
+            file={scanFile}
+            onScanComplete={handleScanComplete}
+          />
+        )
       case 'anonResults':
         return (
           <AnonResultsScreen
             {...nav}
             tasteProfile={tasteProfile}
+            wines={scannedWines}
             onWineSelect={w => handleWineSelect(w, 'anonResults')}
           />
         )

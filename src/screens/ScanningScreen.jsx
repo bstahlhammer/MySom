@@ -1,25 +1,62 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { theme } from '../theme/theme.js'
+import { useScan } from '../hooks/useScan.js'
 
-const MESSAGES = [
+const MOCK_MESSAGES = [
   'Reading wines from list…',
-  'Identifying 8 wines…',
+  'Identifying wines…',
   'Matching to database…',
   'Done ✓',
 ]
 
-export default function ScanningScreen({ navigate }) {
+const REAL_MESSAGES = [
+  'Uploading photo…',
+  'Identifying wines…',
+  'Looking up ratings…',
+  'Done ✓',
+]
+
+export default function ScanningScreen({ navigate, file, onScanComplete }) {
   const [msgIdx, setMsgIdx] = useState(0)
+  const { scanImage } = useScan()
+  const hasRun = useRef(false)
+
+  const messages = file ? REAL_MESSAGES : MOCK_MESSAGES
 
   useEffect(() => {
-    const intervals = [
-      setTimeout(() => setMsgIdx(1), 700),
-      setTimeout(() => setMsgIdx(2), 1500),
-      setTimeout(() => setMsgIdx(3), 2200),
-      setTimeout(() => navigate('anonResults'), 2600),
-    ]
-    return () => intervals.forEach(clearTimeout)
-  }, [navigate])
+    if (hasRun.current) return
+    hasRun.current = true
+
+    if (!file) {
+      // Mock flow — no image provided
+      const timers = [
+        setTimeout(() => setMsgIdx(1), 700),
+        setTimeout(() => setMsgIdx(2), 1500),
+        setTimeout(() => setMsgIdx(3), 2200),
+        setTimeout(() => navigate('anonResults'), 2700),
+      ]
+      return () => timers.forEach(clearTimeout)
+    }
+
+    // Real scan flow
+    const t1 = setTimeout(() => setMsgIdx(1), 1500)
+    const t2 = setTimeout(() => setMsgIdx(2), 4500)
+
+    scanImage(file).then(wines => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+      setMsgIdx(3)
+      setTimeout(() => {
+        if (wines?.length && onScanComplete) {
+          onScanComplete(wines)
+        } else {
+          navigate('anonResults')
+        }
+      }, 600)
+    })
+
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [])
 
   return (
     <div
@@ -46,7 +83,6 @@ export default function ScanningScreen({ navigate }) {
           backgroundColor: '#111',
         }}
       >
-        {/* Corner marks */}
         {[
           { top: -1, left: -1, borderTop: `2px solid ${theme.colors.gold}`, borderLeft: `2px solid ${theme.colors.gold}` },
           { top: -1, right: -1, borderTop: `2px solid ${theme.colors.gold}`, borderRight: `2px solid ${theme.colors.gold}` },
@@ -56,7 +92,6 @@ export default function ScanningScreen({ navigate }) {
           <div key={i} style={{ position: 'absolute', width: 16, height: 16, ...s }} />
         ))}
 
-        {/* Scan line */}
         <div
           style={{
             position: 'absolute',
@@ -70,7 +105,6 @@ export default function ScanningScreen({ navigate }) {
           }}
         />
 
-        {/* Simulated list content */}
         {[...Array(5)].map((_, i) => (
           <div
             key={i}
@@ -99,7 +133,7 @@ export default function ScanningScreen({ navigate }) {
           letterSpacing: '0.02em',
         }}
       >
-        {MESSAGES[msgIdx]}
+        {messages[msgIdx]}
       </div>
     </div>
   )

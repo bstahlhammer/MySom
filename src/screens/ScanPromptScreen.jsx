@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { theme } from '../theme/theme.js'
 import ScanModeCard from '../components/ScanModeCard.jsx'
 import TopBar from '../components/TopBar.jsx'
@@ -14,7 +15,19 @@ const BUYING_FOR = [
   { id: 'gift',  label: 'A gift' },
 ]
 
-export default function ScanPromptScreen({ navigate, goBack, buyingFor, onBuyingForChange }) {
+export default function ScanPromptScreen({ navigate, goBack, buyingFor, onBuyingForChange, onScan }) {
+  const fileInputRef = useRef(null)
+
+  function handleModeSelect() {
+    fileInputRef.current?.click()
+  }
+
+  function handleFileChange(e) {
+    const file = e.target.files?.[0]
+    if (file) onScan(file)
+    e.target.value = ''
+  }
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: theme.colors.surface }}>
       {/* Header */}
@@ -33,13 +46,21 @@ export default function ScanPromptScreen({ navigate, goBack, buyingFor, onBuying
       {/* Scrollable body */}
       <div className="hide-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: theme.spacing.lg, display: 'flex', flexDirection: 'column', gap: theme.spacing.md }}>
         {/* Scan mode cards */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
         {SCAN_MODES.map(mode => (
           <ScanModeCard
             key={mode.title}
             icon={mode.icon}
             title={mode.title}
             description={mode.description}
-            onTap={() => navigate('scanning')}
+            onTap={handleModeSelect}
           />
         ))}
 

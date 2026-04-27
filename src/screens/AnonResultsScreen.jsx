@@ -14,12 +14,13 @@ const SORT_OPTIONS = [
   { value: 'value',  label: 'Value' },
 ]
 
-export default function AnonResultsScreen({ navigate, goBack, onWineSelect, tasteProfile }) {
+export default function AnonResultsScreen({ navigate, goBack, onWineSelect, tasteProfile, wines: propWines }) {
   const [sortKey, setSortKey] = useState('crowd')
+  const wineSource = propWines ?? wines
 
   const sortedWines = useMemo(
-    () => sortWines(wines, sortKey, null),
-    [sortKey]
+    () => sortWines(wineSource, sortKey, null),
+    [sortKey, wineSource]
   )
 
   return (
@@ -32,7 +33,7 @@ export default function AnonResultsScreen({ navigate, goBack, onWineSelect, tast
             Wine List Results
           </h1>
           <p style={{ fontSize: theme.typography.sizes.sm, color: `${theme.colors.cream}80`, fontFamily: theme.typography.fontSans, marginTop: 4 }}>
-            {wines.length} wines · Tap any to explore
+            {wineSource.length} wines · Tap any to explore
           </p>
           <div style={{ marginTop: theme.spacing.md }}>
             <SortToggle options={SORT_OPTIONS} value={sortKey} onChange={setSortKey} />
