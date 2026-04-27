@@ -5,32 +5,30 @@ const PORT = process.env.PORT || 3001
 
 const PROMPT = `You are a wine expert analyzing an image of a wine list or wine shelf.
 
-Extract every wine name visible. Return ONLY a JSON array — one wine object per line (NDJSON format).
-Output each wine on its own line as soon as you have it, do not wait to collect all wines first.
+Extract every wine visible. Output one JSON object per line (NDJSON) as soon as you identify each wine — do not wait.
 
-Each wine object must have these fields:
-- id: sequential integer starting at 1
-- name: wine name as shown (string)
-- vintage: year visible or best estimate (string)
-- region: wine region (string)
-- grape: primary grape or blend (string)
-- price: price with $ symbol or null (string | null)
-- priceNum: numeric price or null (number | null)
-- rating: estimated critic score 85-100 (integer)
+Required fields per wine:
+- id: integer starting at 1
+- name: string
+- vintage: string (estimate if not shown)
+- region: string
+- grape: string
+- price: string with $ or null
+- priceNum: number or null
+- rating: integer 85-100
 - ratingLabel: "Popular pick"|"Widely praised"|"Excellent"|"Highly rated"|"Outstanding"|"Extraordinary"
-- body: 0-100 (integer)
-- sweetness: 0-100 (integer)
-- tannin: 0-100 (integer)
-- acidity: 0-100 (integer)
-- tasting: one sentence tasting note (string)
-- pairings: array of 3-4 food pairing strings
-- retailers: array of any: "costco","trader_joes","whole_foods","grocery","restaurant","wine_shop"
+- body: integer 0-100
+- sweetness: integer 0-100
+- tannin: integer 0-100
+- acidity: integer 0-100
+- tasting: one sentence string
+- pairings: array of 2 strings
 - isValue: boolean
 - isCrowd: boolean
 
-Output format — each wine on its own line, no wrapper array, no markdown:
-{"id":1,"name":"...","vintage":"..."}
-{"id":2,"name":"...","vintage":"..."}`
+One wine per line, no markdown, no wrapper array:
+{"id":1,"name":"..."}
+{"id":2,"name":"..."}`
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -82,7 +80,7 @@ const server = http.createServer(async (req, res) => {
 
     try {
       const stream = await client.messages.stream({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-sonnet-4-6',
         max_tokens: 8192,
         messages: [{
           role: 'user',
