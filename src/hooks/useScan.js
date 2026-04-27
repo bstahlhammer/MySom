@@ -66,7 +66,7 @@ function resizeAndEncode(file) {
     const url = URL.createObjectURL(file)
     img.onload = () => {
       URL.revokeObjectURL(url)
-      const MAX = 1200
+      const MAX = 800
       let { width, height } = img
       if (width > MAX || height > MAX) {
         if (width > height) { height = Math.round(height * MAX / width); width = MAX }
