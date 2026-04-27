@@ -5,27 +5,32 @@ const PORT = process.env.PORT || 3001
 
 const PROMPT = `You are a wine expert analyzing an image of a wine list or wine shelf.
 
-Extract every wine name visible and return a JSON array. For each wine include:
+Extract every wine name visible. Return ONLY a JSON array — one wine object per line (NDJSON format).
+Output each wine on its own line as soon as you have it, do not wait to collect all wines first.
+
+Each wine object must have these fields:
 - id: sequential integer starting at 1
 - name: wine name as shown (string)
-- vintage: year visible or your best estimate (string, e.g. "2022")
+- vintage: year visible or best estimate (string)
 - region: wine region (string)
-- grape: primary grape or blend description (string)
-- price: price as shown including $ symbol, or null if not visible (string | null)
-- priceNum: numeric price only, or null (number | null)
-- rating: estimated Wine Spectator / Wine Advocate score 85-100 (integer)
-- ratingLabel: one of "Popular pick" (85-87), "Widely praised" (88-89), "Excellent" (90-91), "Highly rated" (92-93), "Outstanding" (94-95), "Extraordinary" (96+)
-- body: 0-100 scale, 0=very light, 100=very full (integer)
-- sweetness: 0-100 scale, 0=bone dry, 100=very sweet (integer)
-- tannin: 0-100 scale (integer)
-- acidity: 0-100 scale (integer)
+- grape: primary grape or blend (string)
+- price: price with $ symbol or null (string | null)
+- priceNum: numeric price or null (number | null)
+- rating: estimated critic score 85-100 (integer)
+- ratingLabel: "Popular pick"|"Widely praised"|"Excellent"|"Highly rated"|"Outstanding"|"Extraordinary"
+- body: 0-100 (integer)
+- sweetness: 0-100 (integer)
+- tannin: 0-100 (integer)
+- acidity: 0-100 (integer)
 - tasting: one sentence tasting note (string)
 - pairings: array of 3-4 food pairing strings
-- retailers: array containing any of: "costco","trader_joes","whole_foods","grocery","restaurant","wine_shop"
-- isValue: true if exceptional quality for the price (boolean)
-- isCrowd: true if broadly approachable and crowd-pleasing (boolean)
+- retailers: array of any: "costco","trader_joes","whole_foods","grocery","restaurant","wine_shop"
+- isValue: boolean
+- isCrowd: boolean
 
-Return ONLY the raw JSON array with no markdown, no code fences, no explanation.`
+Output format — each wine on its own line, no wrapper array, no markdown:
+{"id":1,"name":"...","vintage":"..."}
+{"id":2,"name":"...","vintage":"..."}`
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -40,20 +45,15 @@ function readBody(req) {
   })
 }
 
-function send(res, status, body) {
-  const json = JSON.stringify(body)
-  res.writeHead(status, {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  })
-  res.end(json)
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST',
 }
 
 const server = http.createServer(async (req, res) => {
-  // CORS preflight
   if (req.method === 'OPTIONS') {
-    res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Methods': 'POST' })
+    res.writeHead(204, CORS)
     return res.end()
   }
 
@@ -62,21 +62,28 @@ const server = http.createServer(async (req, res) => {
     try {
       body = await readBody(req)
     } catch {
-      return send(res, 400, { error: 'Invalid JSON body' })
+      res.writeHead(400, { 'Content-Type': 'application/json', ...CORS })
+      return res.end(JSON.stringify({ error: 'Invalid JSON body' }))
     }
 
     const { image, mimeType = 'image/jpeg' } = body
-    if (!image) return send(res, 400, { error: 'Missing image field (base64)' })
-
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return send(res, 500, { error: 'ANTHROPIC_API_KEY not set' })
+    if (!image) {
+      res.writeHead(400, { 'Content-Type': 'application/json', ...CORS })
+      return res.end(JSON.stringify({ error: 'Missing image field' }))
     }
 
-    let raw
+    if (!process.env.ANTHROPIC_API_KEY) {
+      res.writeHead(500, { 'Content-Type': 'application/json', ...CORS })
+      return res.end(JSON.stringify({ error: 'ANTHROPIC_API_KEY not set' }))
+    }
+
+    // Start streaming response
+    res.writeHead(200, { 'Content-Type': 'application/x-ndjson', ...CORS })
+
     try {
-      const response = await client.messages.create({
+      const stream = await client.messages.stream({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
+        max_tokens: 8192,
         messages: [{
           role: 'user',
           content: [
@@ -85,26 +92,47 @@ const server = http.createServer(async (req, res) => {
           ],
         }],
       })
-      raw = response.content[0]?.text ?? ''
+
+      let buffer = ''
+      for await (const chunk of stream) {
+        if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') {
+          buffer += chunk.delta.text
+          // Flush complete lines immediately
+          const lines = buffer.split('\n')
+          buffer = lines.pop()
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed) continue
+            try {
+              JSON.parse(trimmed) // validate before sending
+              res.write(trimmed + '\n')
+            } catch {
+              // skip malformed lines
+            }
+          }
+        }
+      }
+
+      // Flush any remaining buffer
+      if (buffer.trim()) {
+        try {
+          JSON.parse(buffer.trim())
+          res.write(buffer.trim() + '\n')
+        } catch { /* ignore */ }
+      }
     } catch (err) {
       console.error('Anthropic error:', err.message)
-      return send(res, 502, { error: 'Vision analysis failed' })
+      if (!res.headersSent) {
+        res.writeHead(502, { 'Content-Type': 'application/json', ...CORS })
+        res.end(JSON.stringify({ error: 'Vision analysis failed' }))
+      }
     }
 
-    let wines
-    try {
-      const cleaned = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
-      wines = JSON.parse(cleaned)
-      if (!Array.isArray(wines)) throw new Error('Not an array')
-    } catch {
-      console.error('Parse error. Raw:', raw.slice(0, 200))
-      return send(res, 500, { error: 'Failed to parse wine data' })
-    }
-
-    return send(res, 200, { wines })
+    return res.end()
   }
 
-  send(res, 404, { error: 'Not found' })
+  res.writeHead(404, { 'Content-Type': 'application/json', ...CORS })
+  res.end(JSON.stringify({ error: 'Not found' }))
 })
 
 server.listen(PORT, () => {

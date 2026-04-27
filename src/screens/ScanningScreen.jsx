@@ -2,60 +2,42 @@ import { useEffect, useRef, useState } from 'react'
 import { theme } from '../theme/theme.js'
 import { useScan } from '../hooks/useScan.js'
 
-const MOCK_MESSAGES = [
-  'Reading wines from list…',
-  'Identifying wines…',
-  'Matching to database…',
-  'Done ✓',
-]
-
-const REAL_MESSAGES = [
-  'Uploading photo…',
-  'Identifying wines…',
-  'Looking up ratings…',
-  'Done ✓',
-]
-
 export default function ScanningScreen({ navigate, file, onScanComplete }) {
-  const [msgIdx, setMsgIdx] = useState(0)
+  const [winesFound, setWinesFound] = useState(0)
+  const [status, setStatus] = useState(file ? 'Uploading photo…' : 'Reading wines from list…')
   const { scanImage } = useScan()
   const hasRun = useRef(false)
-
-  const messages = file ? REAL_MESSAGES : MOCK_MESSAGES
 
   useEffect(() => {
     if (hasRun.current) return
     hasRun.current = true
 
     if (!file) {
-      // Mock flow — no image provided
       const timers = [
-        setTimeout(() => setMsgIdx(1), 700),
-        setTimeout(() => setMsgIdx(2), 1500),
-        setTimeout(() => setMsgIdx(3), 2200),
+        setTimeout(() => setStatus('Identifying wines…'), 700),
+        setTimeout(() => setStatus('Matching to database…'), 1500),
+        setTimeout(() => setStatus('Done ✓'), 2200),
         setTimeout(() => navigate('anonResults'), 2700),
       ]
       return () => timers.forEach(clearTimeout)
     }
 
-    // Real scan flow
-    const t1 = setTimeout(() => setMsgIdx(1), 1500)
-    const t2 = setTimeout(() => setMsgIdx(2), 4500)
+    setStatus('Uploading photo…')
+    setTimeout(() => setStatus('Identifying wines…'), 1200)
 
-    scanImage(file).then(wines => {
-      clearTimeout(t1)
-      clearTimeout(t2)
-      setMsgIdx(3)
+    scanImage(file, (wine) => {
+      setWinesFound(n => n + 1)
+      setStatus(`Found ${winesFound + 1} wine${winesFound + 1 === 1 ? '' : 's'}…`)
+    }).then(wines => {
+      setStatus(`Done — ${wines?.length ?? 0} wines found ✓`)
       setTimeout(() => {
         if (wines?.length && onScanComplete) {
           onScanComplete(wines)
         } else {
           navigate('anonResults')
         }
-      }, 600)
+      }, 800)
     })
-
-    return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [])
 
   return (
@@ -123,17 +105,28 @@ export default function ScanningScreen({ navigate, file, onScanComplete }) {
         ))}
       </div>
 
-      {/* Status message */}
-      <div
-        style={{
-          fontSize: theme.typography.sizes.md,
-          color: theme.colors.cream,
-          fontFamily: theme.typography.fontSans,
-          animation: 'pulse 1.5s ease infinite',
-          letterSpacing: '0.02em',
-        }}
-      >
-        {messages[msgIdx]}
+      {/* Status */}
+      <div style={{ textAlign: 'center' }}>
+        <div
+          style={{
+            fontSize: theme.typography.sizes.md,
+            color: theme.colors.cream,
+            fontFamily: theme.typography.fontSans,
+            letterSpacing: '0.02em',
+            marginBottom: 8,
+          }}
+        >
+          {status}
+        </div>
+        {winesFound > 0 && (
+          <div style={{
+            fontSize: theme.typography.sizes.sm,
+            color: theme.colors.gold,
+            fontFamily: theme.typography.fontSans,
+          }}>
+            {winesFound} wine{winesFound === 1 ? '' : 's'} identified
+          </div>
+        )}
       </div>
     </div>
   )
