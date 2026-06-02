@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { theme } from '../theme/theme.js'
-import { wineSearchDb } from '../data/mockData.js'
+import { allWines } from '../data/wineDatabase.js'
+
+const wineSearchDb = allWines.map(w => ({ id: w.id, name: w.name, vintage: w.vintage, region: w.region, grape: w.grape, price: w.price }))
 
 export default function WineSearchStep({ mode, value = [], onChange }) {
   const [query, setQuery] = useState('')
@@ -34,7 +36,6 @@ export default function WineSearchStep({ mode, value = [], onChange }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
-      {/* Search input */}
       <div style={{ position: 'relative' }}>
         <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: theme.colors.textMuted, fontSize: 16 }}>
           🔍
@@ -57,32 +58,17 @@ export default function WineSearchStep({ mode, value = [], onChange }) {
           }}
         />
       </div>
-
-      {/* Search results */}
       {results.length > 0 && (
-        <div
-          style={{
-            border: `1px solid ${theme.colors.border}`,
-            borderRadius: theme.radius.md,
-            overflow: 'hidden',
-            boxShadow: theme.shadows.elevated,
-          }}
-        >
+        <div style={{ border: `1px solid ${theme.colors.border}`, borderRadius: theme.radius.md, overflow: 'hidden', boxShadow: theme.shadows.elevated }}>
           {results.map((wine, i) => (
             <button
               key={wine.id}
               onClick={() => addWine(wine)}
               style={{
-                width: '100%',
-                padding: '10px 14px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-                backgroundColor: theme.colors.surface,
-                border: 'none',
+                width: '100%', padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 2,
+                backgroundColor: theme.colors.surface, border: 'none',
                 borderTop: i > 0 ? `0.5px solid ${theme.colors.border}` : 'none',
-                cursor: 'pointer',
-                textAlign: 'left',
+                cursor: 'pointer', textAlign: 'left',
               }}
               onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#FAF3E8' }}
               onMouseLeave={e => { e.currentTarget.style.backgroundColor = theme.colors.surface }}
@@ -97,8 +83,6 @@ export default function WineSearchStep({ mode, value = [], onChange }) {
           ))}
         </div>
       )}
-
-      {/* Added wine pills */}
       {addedWines.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: theme.spacing.xs, marginTop: theme.spacing.xs }}>
           {addedWines.map(wine => (
@@ -106,17 +90,11 @@ export default function WineSearchStep({ mode, value = [], onChange }) {
               key={wine.id}
               onClick={() => removeWine(wine.id)}
               style={{
-                padding: '6px 12px',
-                backgroundColor: `${accentColor}18`,
-                border: `1px solid ${accentColor}40`,
-                borderRadius: theme.radius.pill,
-                fontSize: theme.typography.sizes.sm,
-                color: accentColor,
-                fontFamily: theme.typography.fontSans,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
+                padding: '6px 12px', backgroundColor: `${accentColor}18`,
+                border: `1px solid ${accentColor}40`, borderRadius: theme.radius.pill,
+                fontSize: theme.typography.sizes.sm, color: accentColor,
+                fontFamily: theme.typography.fontSans, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6,
               }}
             >
               {wine.name}
@@ -125,10 +103,9 @@ export default function WineSearchStep({ mode, value = [], onChange }) {
           ))}
         </div>
       )}
-
       {addedWines.length === 0 && query.length === 0 && (
         <p style={{ fontSize: theme.typography.sizes.sm, color: theme.colors.textMuted, fontFamily: theme.typography.fontSans, fontStyle: 'italic' }}>
-          {isHate ? 'No wines added yet — this step is optional.' : 'No wines added yet — this step is optional.'}
+          No wines added yet — this step is optional.
         </p>
       )}
     </div>
